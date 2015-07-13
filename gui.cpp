@@ -3,12 +3,15 @@
 #include <opencv2/highgui/highgui.hpp>
 #if CV_MAJOR_VERSION > 2
 # include <opencv2/imgproc.hpp>
+#else
+# include <opencv2/imgproc/imgproc.hpp>
 #endif
 
 using cv::setMouseCallback;
 using cv::Point;
 using cv::Scalar;
 using cv::Size;
+using cv::resize;
 
 void screenLog(Mat im_draw, const string text)
 {
@@ -52,19 +55,21 @@ static void onMouse(int event, int x, int y, int flags, void *param)
         tl_set = true;
     }
 
-    else if(event == CV_EVENT_LBUTTONUP && tl_set)
+    else if(event == CV_EVENT_LBUTTONUP && tl_set && !br_set)
     {
         br = Point(x,y);
         br_set = true;
-        screenLog(im_draw, "Initializing...");
+        setMouseCallback(win_name_, NULL);
     }
 
     if (!tl_set) screenLog(im_draw, "Click on the top left corner of the object");
     else
     {
-        rectangle(im_draw, tl, Point(x, y), Scalar(255,0,0));
-
-        if (!br_set) screenLog(im_draw, "Click on the bottom right corner of the object");
+        if (!br_set)
+        {
+            rectangle(im_draw, tl, Point(x, y), Scalar(255,0,0));
+            screenLog(im_draw, "Click on the bottom right corner of the object");
+        }
     }
 
     imshow(win_name_, im_draw);
@@ -78,20 +83,86 @@ Rect getRect(const Mat im, const string win_name)
     tl_set = false;
     br_set = false;
 
+    int zoom = 1;
+
     setMouseCallback(win_name, onMouse);
 
     //Dummy call to get drawing right
     onMouse(0,0,0,0,0);
 
-    while(!br_set)
+    while(true)
     {
-        cvWaitKey(10);
-    }
+        char k = cvWaitKey(10);
 
-    setMouseCallback(win_name, NULL);
+        if (br_set)
+        {
+            Mat im_draw;
+            im_select.copyTo(im_draw);
+
+            screenLog(im_draw, "Adjust with a, s, d, w; zoom with i, o; hit enter to continue");
+
+            if (k == '\n') break;
+            else if (k == 'a')
+            {
+                tl = Point((tl.x - 1), tl.y);
+                br = Point((br.x - 1), br.y);
+            }
+            else if (k == 'd')
+            {
+                tl = Point((tl.x + 1), tl.y);
+                br = Point((br.x + 1), br.y);
+            }
+            else if (k == 'w')
+            {
+                tl = Point(tl.x, (tl.y - 1));
+                br = Point(br.x, (br.y - 1));
+            }
+            else if (k == 's')
+            {
+                tl = Point(tl.x, (tl.y + 1));
+                br = Point(br.x, (br.y + 1));
+            }
+            else if (k == 'A')
+            {
+                br = Point((br.x - 1), br.y);
+            }
+            else if (k == 'D')
+            {
+                br = Point((br.x + 1), br.y);
+            }
+            else if (k == 'W')
+            {
+                br = Point(br.x, (br.y - 1));
+            }
+            else if (k == 'S')
+            {
+                br = Point(br.x, (br.y + 1));
+            }
+            else if (k == 'i')
+            {
+                zoom++;
+            }
+            else if (k == 'o')
+            {
+                zoom--;
+                if (zoom < 1) zoom = 1;
+            }
+
+            if (zoom != 1)
+            {
+                resize(im_draw, im_draw, Size(), zoom, zoom);
+                rectangle(im_draw, (tl * zoom), (br * zoom), Scalar(255,0,0));
+            }
+            else
+            {
+                rectangle(im_draw, tl, br, Scalar(255,0,0));
+            }
+
+            imshow(win_name, im_draw);
+        }
+    }
 
     im_select.release(); //im_select is in global scope, so we call release manually
 
     return Rect(tl,br);
 }
-
