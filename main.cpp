@@ -113,6 +113,7 @@ int main(int argc, char **argv)
     int bbox_flag = 0;
     int skip_frames = 0;
     int skip_msecs = 0;
+    int quiet_flag = 0;
     int output_flag = 0;
     string input_path;
     string output_path;
@@ -134,6 +135,7 @@ int main(int argc, char **argv)
         {"verbose", no_argument, &verbose_flag, 1},
         {"no-scale", no_argument, 0, no_scale_cmd},
         {"with-rotation", no_argument, 0, with_rotation_cmd},
+        {"quiet", no_argument, &quiet_flag, 1},
         //Argument options
         {"bbox", required_argument, 0, bbox_cmd},
         {"detector", required_argument, 0, detector_cmd},
@@ -446,9 +448,11 @@ int main(int argc, char **argv)
             FILE_LOG(logINFO) << "#" << frame << " active: " << cmt.points_active.size();
         }
 
-        //Display image and then quit if requested.
-        char key = display(im, cmt);
-        if(key == 'q') break;
+        if (!quiet_flag)
+        {
+            char key = display(im, cmt);
+            if(key == 'q') break;
+        }
     }
 
     //Close output file.
