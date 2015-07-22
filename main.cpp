@@ -18,6 +18,8 @@
 using cmt::CMT;
 using cv::imread;
 using cv::namedWindow;
+using cv::destroyWindow;
+using cv::startWindowThread;
 using cv::Scalar;
 using cv::VideoCapture;
 using cv::waitKey;
@@ -315,12 +317,19 @@ int main(int argc, char **argv)
 
     //Normal mode
 
-    //Create window
-    namedWindow(WIN_NAME);
+    //Create window and allow preview if not in quiet mode
+    bool show_preview;
+    if (quiet_flag)
+    {
+        show_preview = false;
+    }
+    else
+    {
+        namedWindow(WIN_NAME);
+        show_preview = true;
+    }
 
     VideoCapture cap;
-
-    bool show_preview = true;
 
     //If no input was specified
     if (input_path.length() == 0)
@@ -378,7 +387,17 @@ int main(int argc, char **argv)
     //If no bounding was specified, get it from user
     if (!bbox_flag)
     {
-        rect = getRect(im0, WIN_NAME);
+        if (quiet_flag)
+        {
+            startWindowThread(); //Cannot destroy window without this!
+            namedWindow(WIN_NAME);
+            rect = getRect(im0, WIN_NAME);
+            destroyWindow(WIN_NAME);
+        }
+        else
+        {
+            rect = getRect(im0, WIN_NAME);
+        }
     }
 
     FILE_LOG(logINFO) << "Using " << rect.x << "," << rect.y << "," << rect.width << "," << rect.height
