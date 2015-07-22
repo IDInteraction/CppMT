@@ -232,9 +232,16 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    //Set up logging
-    FILELog::ReportingLevel() = verbose_flag ? logDEBUG : logINFO;
-    Output2FILE::Stream() = stdout; //Log to stdout
+    //Set up logging. Quiet takes preference over verbose.
+    if (quiet_flag)
+    {
+        FILELog::ReportingLevel() = logERROR;
+    }
+    else
+    {
+        FILELog::ReportingLevel() = verbose_flag ? logDEBUG : logINFO;
+        Output2FILE::Stream() = stdout; //Log to stdout
+    }
 
     //Challenge mode
     if (challenge_flag)
