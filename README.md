@@ -54,7 +54,7 @@ For example, vc12 is to be used for Visual Studio 2013.
 ```
 usage: ./cmt [--challenge] [--no-scale] [--with-rotation] [--bbox BBOX]
              [--skip N] [--skip-msecs N] [--output-file FILE]
-             [--verbose] [inputpath]
+             [--quiet] [--verbose] [inputpath]
 ```
 ## Optional arguments
 * `inputpath` The input path.
@@ -65,10 +65,16 @@ usage: ./cmt [--challenge] [--no-scale] [--with-rotation] [--bbox BBOX]
 * `--skip N` Skip N frames of the video input
 * `--skip-msecs N` Skip N milliseconds of the video input
 * `--output-file FILE` Save data to a file in CSV format
+* `--quiet` Do not show graphical output (Useful in combination with `--output-file`)
 * `--verbose`, `-v` Turn on debugging console output
 
 Trying to skip both frames and milliseconds at the start of a video will raise
 an error.
+
+Enabling quiet mode will suppress all graphical output and all console output
+apart from error messages, which will go to standard error. If no bounding box
+is specified on the command line then a window will open to allow one to be
+defined.
 
 ## Object Selection
 Press any key to stop the preview stream. Left click to select the

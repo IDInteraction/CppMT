@@ -18,6 +18,8 @@
 using cmt::CMT;
 using cv::imread;
 using cv::namedWindow;
+using cv::destroyWindow;
+using cv::startWindowThread;
 using cv::Scalar;
 using cv::VideoCapture;
 using cv::waitKey;
@@ -113,6 +115,7 @@ int main(int argc, char **argv)
     int bbox_flag = 0;
     int skip_frames = 0;
     int skip_msecs = 0;
+    int quiet_flag = 0;
     int output_flag = 0;
     string input_path;
     string output_path;
@@ -134,6 +137,7 @@ int main(int argc, char **argv)
         {"verbose", no_argument, &verbose_flag, 1},
         {"no-scale", no_argument, 0, no_scale_cmd},
         {"with-rotation", no_argument, 0, with_rotation_cmd},
+        {"quiet", no_argument, &quiet_flag, 1},
         //Argument options
         {"bbox", required_argument, 0, bbox_cmd},
         {"detector", required_argument, 0, detector_cmd},
@@ -228,9 +232,16 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    //Set up logging
-    FILELog::ReportingLevel() = verbose_flag ? logDEBUG : logINFO;
-    Output2FILE::Stream() = stdout; //Log to stdout
+    //Set up logging. Quiet takes preference over verbose.
+    if (quiet_flag)
+    {
+        FILELog::ReportingLevel() = logERROR;
+    }
+    else
+    {
+        FILELog::ReportingLevel() = verbose_flag ? logDEBUG : logINFO;
+        Output2FILE::Stream() = stdout; //Log to stdout
+    }
 
     //Challenge mode
     if (challenge_flag)
@@ -313,12 +324,19 @@ int main(int argc, char **argv)
 
     //Normal mode
 
-    //Create window
-    namedWindow(WIN_NAME);
+    //Create window and allow preview if not in quiet mode
+    bool show_preview;
+    if (quiet_flag)
+    {
+        show_preview = false;
+    }
+    else
+    {
+        namedWindow(WIN_NAME);
+        show_preview = true;
+    }
 
     VideoCapture cap;
-
-    bool show_preview = true;
 
     //If no input was specified
     if (input_path.length() == 0)
@@ -376,7 +394,17 @@ int main(int argc, char **argv)
     //If no bounding was specified, get it from user
     if (!bbox_flag)
     {
-        rect = getRect(im0, WIN_NAME);
+        if (quiet_flag)
+        {
+            startWindowThread(); //Cannot destroy window without this!
+            namedWindow(WIN_NAME);
+            rect = getRect(im0, WIN_NAME);
+            destroyWindow(WIN_NAME);
+        }
+        else
+        {
+            rect = getRect(im0, WIN_NAME);
+        }
     }
 
     FILE_LOG(logINFO) << "Using " << rect.x << "," << rect.y << "," << rect.width << "," << rect.height
@@ -446,9 +474,11 @@ int main(int argc, char **argv)
             FILE_LOG(logINFO) << "#" << frame << " active: " << cmt.points_active.size();
         }
 
-        //Display image and then quit if requested.
-        char key = display(im, cmt);
-        if(key == 'q') break;
+        if (!quiet_flag)
+        {
+            char key = display(im, cmt);
+            if(key == 'q') break;
+        }
     }
 
     //Close output file.
