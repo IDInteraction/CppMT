@@ -114,6 +114,7 @@ int main(int argc, char **argv)
     int skip_frames = 0;
     int skip_msecs = 0;
     int output_flag = 0;
+    int last_frame = 0;
     string input_path;
     string output_path;
 
@@ -125,6 +126,7 @@ int main(int argc, char **argv)
     const int skip_cmd = 1005;
     const int skip_msecs_cmd = 1006;
     const int output_file_cmd = 1007;
+    const int process_frames_cmd = 1008;
 
     struct option longopts[] =
     {
@@ -141,6 +143,7 @@ int main(int argc, char **argv)
         {"output-file", required_argument, 0, output_file_cmd},
         {"skip", required_argument, 0, skip_cmd},
         {"skip-msecs", required_argument, 0, skip_msecs_cmd},
+        {"process-frames", required_argument, 0, process_frames_cmd},
         {0, 0, 0, 0}
     };
 
@@ -194,6 +197,15 @@ int main(int argc, char **argv)
                     if (ret != 1)
                     {
                       skip_msecs = 0;
+                    }
+                }
+                break;
+            case process_frames_cmd:
+                {
+                    int ret = sscanf(optarg, "%d", &last_frame);
+                    if (ret != 1)
+                    {
+                        last_frame = 0;
                     }
                 }
                 break;
@@ -344,6 +356,7 @@ int main(int argc, char **argv)
           skip_frames = (int) cap.get(CV_CAP_PROP_POS_FRAMES);
         }
 
+        last_frame += skip_frames; // Adjust the last frame number accordingly.
         show_preview = false;
     }
 
@@ -446,9 +459,9 @@ int main(int argc, char **argv)
             FILE_LOG(logINFO) << "#" << frame << " active: " << cmt.points_active.size();
         }
 
-        //Display image and then quit if requested.
+        //Display image and then quit if requested or we've reached the last frame.
         char key = display(im, cmt);
-        if(key == 'q') break;
+        if(key == 'q' || frame == last_frame) break;
     }
 
     //Close output file.
