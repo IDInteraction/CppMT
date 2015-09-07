@@ -53,7 +53,8 @@ For example, vc12 is to be used for Visual Studio 2013.
 # Usage
 ```
 usage: ./cmt [--challenge] [--no-scale] [--with-rotation] [--bbox BBOX]
-             [--skip N] [--skip-msecs N] [--output-file FILE]
+             [--skip N] [--skip-msecs N] [--process-frames N]
+             [--output-file FILE]
              [--verbose] [inputpath]
 ```
 ## Optional arguments
@@ -64,6 +65,7 @@ usage: ./cmt [--challenge] [--no-scale] [--with-rotation] [--bbox BBOX]
 * `--bbox BBOX` Specify initial bounding box. Format: x,y,w,h
 * `--skip N` Skip N frames of the video input
 * `--skip-msecs N` Skip N milliseconds of the video input
+* `--process-frames N` Process N frames of input, then exit
 * `--output-file FILE` Save data to a file in CSV format
 * `--verbose`, `-v` Turn on debugging console output
 
@@ -91,6 +93,13 @@ cmt im_%04d.png
 It is also possible to specify the initial bounding box on the command line:
 ```
 cmt --bbox=123,85,60,140 test.avi
+```
+
+You can limit processing to a particular part of the input using the `--skip`
+and `--process-frames` options. To process 1000 frames starting from the
+2000th frame, use:
+```
+cmt --skip=2000 --process-frames=1000 test.avi
 ```
 
 You can output data (number of active points, bounding box parameters) to a
